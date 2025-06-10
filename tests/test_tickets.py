@@ -1,6 +1,9 @@
 from playwright.sync_api import sync_playwright
+from pathlib import Path
 
-concert_ticket_app_html_path = "file:///C:/Users/george.reynolds/Downloads/concertapp.html"
+project_root = Path(__file__).parent.parent.resolve()
+testapps_folder = project_root / "testapps"
+concert_ticket_app_html_path = testapps_folder / "concertapp.html"
 artist_tiles_xpath = "xpath=//div[@class='screen active']/div" # Will resolve to 3 selectors, need to index
 full_name_input_box = "css=[id='name']"
 email_input_box = "css=[id='email']"
@@ -90,7 +93,7 @@ def test_validation():
         assert "Card number must be 16 digits." in form_error_message
 
 def test_new_validation():
-
+    with sync_playwright() as p:
     # Launch browser
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()

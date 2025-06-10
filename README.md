@@ -1,6 +1,6 @@
 Run these commands sequentially to get going:
 
 python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+venv\Scripts\activate
 pip install -r requirements.txt
 pytest

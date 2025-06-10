@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buggy Concert Ticket Sales</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+    }
+    .screen {
+      display: none;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 360px;
+    }
+    .screen.active {
+      display: block;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .tile {
+      background: #eee;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .tile:hover {
+      background: #ddd;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+	  margin-top: 20px;
+	  width: 100%;
+	  padding: 10px;
+	  background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+	  background-size: 400% 400%;
+	  color: white;
+	  border: none;
+	  border-radius: 5px;
+	  font-size: 16px;
+	  cursor: pointer;
+	  animation: rainbowShift 8s ease infinite;
+	}
+
+	button:hover {
+	  background-position: right center;
+	}
+
+	@keyframes rainbowShift {
+	  0% { background-position: 0% 50%; }
+	  50% { background-position: 100% 50%; }
+	  100% { background-position: 0% 50%; }
+	}
+
+    .success-msg {
+      text-align: center;
+      color: green;
+      font-weight: bold;
+    }
+    .balloon {
+      position: absolute;
+      bottom: -100px;
+      width: 40px;
+      height: 60px;
+      background-color: #ff6b81;
+      border-radius: 0 0 20px 20px;
+      animation: floatUp 6s ease-in infinite;
+      z-index: 0;
+    }
+    .balloon::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      width: 20px;
+      height: 20px;
+      background-color: inherit;
+      border-radius: 50%;
+    }
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-700px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Concert Selection -->
+  <div class="screen active" id="screen1">
+    <h2>Select a Concert</h2>
+    <div class="tile" onclick="selectConcert('The Weeknd')">The Weeknd</div>
+    <div class="tile" onclick="selectConcert('Taylor Swift')">Taylor Swift</div>
+    <div class="tile" onclick="selectConcert('Imagine Dragons')">Imagine Dragons</div>
+  </div>
+
+  <!-- Screen 2: Purchase Form -->
+  <div class="screen" id="screen2">
+    <h2>Buy Tickets</h2>
+    <p id="selectedConcertText" style="text-align:center;"></p>
+
+    <label for="name">Full Name</label>
+    <input type="text" id="name" />
+
+    <label for="email">Email</label>
+    <input type="email" id="email" />
+
+    <label for="tickets">Number of Tickets</label>
+    <!-- BUG: Hardcoded to always be 1 ticket -->
+    <input type="number" id="tickets" min="1" max="1" value="1" readonly />
+
+    <label for="cardType">Card Type</label>
+    <select id="cardType">
+      <option value="">--Select--</option>
+      <option value="Visa">Visa</option>
+      <option value="MasterCard">MasterCard</option>
+      <option value="Amex">American Express</option>
+      <option value="Discover">Discover</option>
+    </select>
+
+    <label for="cardNumber">Card Number</label>
+    <input type="text" id="cardNumber" maxlength="19" />
+
+    <label for="expiry">Expiration Date (MM/YY)</label>
+    <input type="text" id="expiry" placeholder="MM/YY" maxlength="5" />
+
+    <label for="cvv">CVV</label>
+    <input type="text" id="cvv" maxlength="4" />
+
+    <label for="billing">Billing Address</label>
+    <input type="text" id="billing" />
+
+    <button onclick="submitForm()">Purchase</button>
+    <div id="formError" style="color: red; text-align: center; margin-top: 10px;"></div>
+  </div>
+
+  <!-- Screen 3: Success -->
+  <div class="screen" id="screen3" style="position: relative; overflow: hidden; height: 400px;">
+    <h2>Success!</h2>
+    <p class="success-msg">
+      Your tickets have been purchased for <span id="concertNameConfirm"></span>.<br />
+      A confirmation has been sent to your email.
+    </p>
+    <div id="balloonContainer"></div>
+  </div>
+
+  <script>
+    let selectedConcert = "";
+
+    function selectConcert(concert) {
+      // BUG: Always select Biju Kuriakose no matter what
+      selectedConcert = "Biju Kuriakose";
+      document.getElementById('selectedConcertText').innerText = `You selected: ${selectedConcert}`;
+      showScreen(2);
+    }
+
+    function submitForm() {
+      // BUG: No validation!
+	  if (document.getElementById('cardNumber').value.includes("' OR '1'='1")) {
+	  document.body.innerHTML = `
+		<h2 style="color:red; text-align:center; margin-bottom: 20px;">Database Dump: cc_transactions</h2>
+		<p style="font-family: monospace; color: #333; text-align: center; margin-bottom: 10px;">
+		  Executed Query:
+		</p>
+		<pre style="background: #eee; color: black; padding: 15px; max-width: 600px; margin: 0 auto 30px; font-size: 14px;">
+	SELECT * FROM cc_transactions WHERE card_number = '' OR '1'='1';
+		</pre>
+		<pre style="background:black; color:lime; padding:20px; max-height:500px; overflow:auto; font-size: 14px;">
+	id  | customer_name      | card_number          | expiry | cvv  | billing_address
+	-----------------------------------------------------------------------------------
+	101 | Alice Johnson      | 4111-1111-1111-1111  | 12/26  | 123  | 123 Elm St
+	102 | Bob Smith          | 5500-0000-0000-0004  | 01/27  | 456  | 456 Oak St
+	103 | Charlie Davis      | 3400-0000-0000-009   | 03/28  | 789  | 789 Pine St
+	104 | Dana Lee           | 6011-0000-0000-0004  | 06/25  | 321  | 321 Maple Ave
+	105 | Evan Garcia        | 3530-1113-3330-0000  | 09/24  | 654  | 654 Cedar Blvd
+	106 | Fiona Thompson     | 4111-1234-5678-9876  | 11/23  | 999  | 987 Birch Rd
+	107 | George Reynolds    | 5500-8765-4321-0004  | 08/26  | 555  | 543 Spruce St
+	108 | Hannah Williams    | 3400-1111-1111-111   | 04/25  | 111  | 210 Redwood Dr
+	109 | Ian Martinez       | 6011-2222-3333-4444  | 10/28  | 777  | 876 Poplar Ct
+	110 | Julia Roberts      | 3530-4444-5555-6666  | 07/27  | 333  | 135 Cypress Ln
+		</pre>
+	  `;
+	  return;
+	}
+      document.getElementById('concertNameConfirm').innerText = selectedConcert;
+      showScreen(3);
+      generateBalloons(10);
+    }
+
+    function showScreen(num) {
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById(`screen${i}`).classList.remove('active');
+      }
+      document.getElementById(`screen${num}`).classList.add('active');
+    }
+
+    function generateBalloons(count) {
+      const container = document.getElementById('balloonContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < count; i++) {
+        const b = document.createElement('div');
+        b.classList.add('balloon');
+        b.style.left = Math.random() * 90 + "%";
+        b.style.backgroundColor = '#ff6b81';
+        b.style.animationDuration = (4 + Math.random() * 3) + "s";
+        container.appendChild(b);
+      }
+    }
+
+    function getRandomColor() {
+      const colors = ['#ff6b81', '#feca57', '#1dd1a1', '#54a0ff', '#5f27cd', '#00d2d3'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+  </script>
+
+</body>
+</html>

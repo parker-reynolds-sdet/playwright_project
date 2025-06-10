@@ -1,0 +1,12 @@
+# Ignore virtual environment
+venv/
+
+# VSCode settings (optional but common)
+.vscode/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Playwright cache (optional but safe to ignore)
+playwright/.cache/
